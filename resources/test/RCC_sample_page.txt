@@ -1,0 +1,22 @@
+
+Code | Description | Unit | Rate
+
+5.1 | Providing and laying in position specified grade of reinforced cement concrete, excluding the cost of centering, shuttering, finishing and reinforcement - All work up to plinth level :
+5.1.1 | DELETED 
+5.1.2 | 1:1.5:3 (1 cement : 1.5 coarse sand (zone-III): 3 graded stone aggregate 20 mm nominal size). | cum | 6215.35 
+5.1.3 | 1:2:4 (1 cement : 2 coarse sand : 4 graded stone aggregate 20 mm nominal size). | cum | 5772.65
+
+5.2 | Reinforced cement concrete work in walls (any thickness), including attached pilasters, buttresses, plinth and string courses, fillets, columns, pillars, piers, abutments, posts and struts etc. above plinth level up to floor five level, excluding cost of centering, shuttering, finishing and reinforcement :
+5.2.1 | DELETED
+5.2.2 | 1:1.5:3 (1 cement : 1.5 coarse sand(zone-III) : 3 graded stone aggregate 20 mm nominal size). | cum | 7145.80
+5.2.3 | DELETED
+
+5.3 Reinforced cement concrete work in beams, suspended floors, roofs having slope up to 15° landings, balconies, shelves, chajjas, lintels, bands, plain window sills, staircases and spiral stair cases above plinth level up to floor five level, excluding the cost of centering, shuttering, finishing and reinforcement, with 1:1.5:3 (1 cement : 1.5 coarse sand (zone-III) : 3 graded stone aggregate 20 mm nominal size). | cum | 7390.80
+
+5.4 Providing and laying up to floor five level reinforced cement concrete in kerbs, steps and the like excluding the cost of centering, shuttering, finishing and reinforcement with 1:1.5:3 (1 cement : 1.5 coarse sand (zone-III) : 3 graded stone aggregate 20 mm nominal size). | cum | 6927.85
+
+5.5 Reinforced cement concrete work in arches, archribs, domes, vaults, shells, folded plate and roofs having slope more than 15° up to floor five level, excluding the cost of centering, shuttering, finishing and reinforcement, with 1:1.5:3 (1 cement : 1.5 coarse sand (zone-III) : 3 graded stone aggregate 20 mm nominal size). | cum | 7691.95
+
+5.6 Reinforced cement concrete work in chimneys, shafts, up to floor five level , excluding the cost of centering, shuttering, finishing and reinforcement with 1:1.5:3 (1 cement : 1.5 coarse sand (zone-III) : 3 graded stone aggregate 20 mm nominal size). | cum | 7256.95
+
+5.7 Reinforced cement concrete work in well-steining, excluding the cost of centering, shuttering, finishing and reinforcement with 1:1.5:3 (1 cement : 1.5 coarse sand(zone-III) : 3 graded stone aggregate 20 mm nominal size). | cum | 5958.85

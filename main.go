@@ -1,141 +1,123 @@
-/*
- * PDF to text: Extract all text for each page of a pdf file.
- *
- * Run as: go run pdf_extract_text.go input.pdf
- */
-
 package main
 
 import (
 	"fmt"
-	"os"
+	"io/ioutil"
 	"regexp"
 	"strconv"
 	"strings"
-
-	"github.com/unidoc/unidoc/pdf/extractor"
-	pdf "github.com/unidoc/unidoc/pdf/model"
 )
 
 //ItemCodeRegex regex for extracting item code.
-const ItemCodeRegex = "([0-9]+[A-Z]*\\.)+[0-9]+[A-Z]*"
+const ItemCodeRegex = "([0-9]+[A-Z]*\\.)+[0-9]+[A-Z]*$"
 
 // AmountRegex regex for extracting amount.
-const AmountRegex = "([0-9]+\\.[0-9]+)"
+const AmountRegex = "([0-9]+\\.[0-9][0-9][0-9]*)$"
 
 func main() {
-	if len(os.Args) < 2 {
-		fmt.Printf("Usage: go run pdf_extract_text.go input.pdf\n")
-		os.Exit(1)
+	b, err := ioutil.ReadFile("resources/test/dsr_2016_rcc_subhead.csv")
+	if err != nil {
+		fmt.Print(err)
 	}
+	str := string(b)
 
-	inputPath := os.Args[1]
-	parsedEntities := make([]Entity, 0)
-	parsedEntities = outputPdfText(inputPath, parsedEntities)
-	for _, e := range parsedEntities {
-		e.print()
+	lines := strings.Split(str, "\n")
+	parsedEntities := make([]Entity, 50)
+
+	parseLines(lines, parsedEntities, -1, 0, Entity{}, false)
+
+	for _, i := range parsedEntities {
+		i.print()
 	}
 }
 
-// outputPdfText prints out contents of PDF file to stdout.
-func outputPdfText(inputPath string, parsedEntities []Entity) []Entity {
-	f, err := os.Open(inputPath)
-	if err != nil {
-		return nil
+func parseLines(lines []string, parsedEntities []Entity, lineIdx int, itemIdx int, entity Entity, processingItem bool) {
+
+	if lineIdx == -1 {
+		// STARTING
+		lineIdx = 0
 	}
 
-	defer f.Close()
-
-	pdfReader, err := pdf.NewPdfReader(f)
-	if err != nil {
-		return nil
+	if lineIdx == len(lines) {
+		// we can stop now.
+		//return
+		return
 	}
 
-	// numPages, err := pdfReader.GetNumPages()
-	// if err != nil {
-	// 	return err
-	// }
-	page, err := pdfReader.GetPage(1)
-	if err != nil {
-		return nil
-	}
+	words := strings.Split(lines[lineIdx], "|")
 
-	ex, err := extractor.New(page)
+	if isStartOfItem(words[0]) {
 
-	if err != nil {
-		return nil
-	}
+		if len(words) < 2 {
+			fmt.Println("ERR: Unexpected line encountered, starts with item code pattern but doesnt have any more details to look for, returning without entity record, line: " + lines[lineIdx])
+			return
+		}
 
-	text, err := ex.ExtractText()
-	if err != nil {
-		return nil
-	}
+		entity.ID = strings.Trim(words[0], "\\s")
 
-	text = strings.Split(text, "- [Unlicensed")[0]
-
-	itemCodeRegx, _ := regexp.Compile(ItemCodeRegex)
-	amntRegx, _ := regexp.Compile(AmountRegex)
-
-	lines := strings.Split(text, "\n")
-
-	for _, i := range lines {
-		words := strings.Split(i, " ")
-		if itemCodeRegx.Match([]byte(words[0])) {
-
-			lastWordInLine := words[len(words)-1]
-			secondLastWordInLine := words[len(words)-2]
-
-			if amntRegx.Match([]byte(lastWordInLine)) && knownUnit(secondLastWordInLine) {
-
-				desc := strings.Join(words[1:len(words)-3], " ")
-				rate, err := strconv.ParseFloat(lastWordInLine, 64)
-				if err != nil {
-					return nil
-				}
-				entity := Entity{
-					ID:          words[0],
-					Description: desc,
-					Unit:        secondLastWordInLine,
-					Rate:        rate,
-				}
-
-				// item code found.
-				parsedEntities = append(parsedEntities, entity)
-				if err != nil {
-					fmt.Println("Error!!")
-					return nil
-				}
-
-				return parsedEntities
+		if isAmount(words[len(words)-1]) && knownUnit(words[len(words)-2]) {
+			// check for last element being amount.
+			entity.Description = entity.Description + words[1]
+			entity.Unit = words[len(words)-2]
+			rate, err := strconv.ParseFloat(words[len(words)-1], 64)
+			if err != nil {
+				fmt.Println("ERR: Unexpected error while parsing item amount, returning without record, line: " + lines[lineIdx])
+				return
 			}
+			entity.Rate = rate
+			parsedEntities[itemIdx] = entity
+			parseLines(lines, parsedEntities, lineIdx+1, itemIdx+1, Entity{}, false)
+
+		} else if "DELETED" == words[len(words)-1] {
+			// check for deleted
+			entity.Description = "DELETED"
+			entity.Unit = "NA"
+			parsedEntities[itemIdx] = entity
+			parseLines(lines, parsedEntities, lineIdx+1, itemIdx+1, Entity{}, false)
+
+		} else {
+			entity.Description = entity.Description + words[1]
+			parseLines(lines, parsedEntities, lineIdx+1, itemIdx, entity, true)
+		}
+
+	} else {
+		if processingItem {
+			if isAmount(words[len(words)-1]) && knownUnit(words[len(words)-2]) {
+				// check for last element being amount.
+				entity.Description = entity.Description + words[0]
+				entity.Unit = words[len(words)-2]
+				rate, err := strconv.ParseFloat(words[len(words)-1], 64)
+				if err != nil {
+					fmt.Println("ERR: Unexpected error while parsing item amount, returning without record, line: " + lines[lineIdx])
+					return
+				}
+				entity.Rate = rate
+				parsedEntities[itemIdx] = entity
+				parseLines(lines, parsedEntities, lineIdx+1, itemIdx+1, Entity{}, false)
+			} else {
+				entity.Description = entity.Description + words[0]
+				parseLines(lines, parsedEntities, lineIdx+1, itemIdx, entity, true)
+			}
+		} else {
+			parseLines(lines, parsedEntities, lineIdx+1, itemIdx, entity, processingItem)
 		}
 	}
+}
 
-	// regx, _ := regexp.Compile("([0-9]+[A-Z]*\\.)+[0-9]+[A-Z]*")
+// isStartOfItem returns true for item starts
+func isStartOfItem(item string) bool {
+	itemRegx, _ := regexp.Compile(ItemCodeRegex)
+	if itemRegx.Match([]byte(item)) {
+		return true
+	}
+	return false
+}
 
-	// for i := 0; i < numPages; i++ {
-	// 	pageNum := i + 1
-
-	// 	page, err := pdfReader.GetPage(pageNum)
-	// 	if err != nil {
-	// 		return err
-	// 	}
-
-	// 	ex, err := extractor.New(page)
-	// 	if err != nil {
-	// 		return err
-	// 	}
-
-	// 	text, err := ex.ExtractText()
-	// 	if err != nil {
-	// 		return err
-	// 	}
-
-	// 	fmt.Println("------------------------------")
-	// 	fmt.Printf("Page %d:\n", pageNum)
-	// 	fmt.Printf("\"%s\"\n", text)
-	// 	fmt.Println("------------------------------")
-	// }
-
-	return nil
+// isAmount returs true is amount is detected on page.
+func isAmount(amnt string) bool {
+	amntRegex, _ := regexp.Compile(AmountRegex)
+	if amntRegex.Match([]byte(amnt)) {
+		return true
+	}
+	return false
 }
