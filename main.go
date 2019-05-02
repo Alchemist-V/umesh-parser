@@ -25,9 +25,9 @@ func main() {
 	parsedEntities := make([]Entity, 50)
 
 	parseLines(lines, parsedEntities, -1, 0, Entity{}, false)
-
 	for _, i := range parsedEntities {
 		i.print()
+		PersistDSR2016(i)
 	}
 }
 
@@ -48,13 +48,19 @@ func parseLines(lines []string, parsedEntities []Entity, lineIdx int, itemIdx in
 
 	if isStartOfItem(words[0]) {
 
+		if entity.ID != "" {
+			parsedEntities[itemIdx] = entity
+
+			// assign new val
+			entity = Entity{}
+		}
+
 		if len(words) < 2 {
 			fmt.Println("ERR: Unexpected line encountered, starts with item code pattern but doesnt have any more details to look for, returning without entity record, line: " + lines[lineIdx])
 			return
 		}
 
 		entity.ID = strings.Trim(words[0], "\\s")
-
 		if isAmount(words[len(words)-1]) && knownUnit(words[len(words)-2]) {
 			// check for last element being amount.
 			entity.Description = entity.Description + words[1]
@@ -65,15 +71,13 @@ func parseLines(lines []string, parsedEntities []Entity, lineIdx int, itemIdx in
 				return
 			}
 			entity.Rate = rate
-			parsedEntities[itemIdx] = entity
-			parseLines(lines, parsedEntities, lineIdx+1, itemIdx+1, Entity{}, false)
+			parseLines(lines, parsedEntities, lineIdx+1, itemIdx+1, entity, false)
 
 		} else if "DELETED" == words[len(words)-1] {
 			// check for deleted
 			entity.Description = "DELETED"
 			entity.Unit = "NA"
-			parsedEntities[itemIdx] = entity
-			parseLines(lines, parsedEntities, lineIdx+1, itemIdx+1, Entity{}, false)
+			parseLines(lines, parsedEntities, lineIdx+1, itemIdx+1, entity, false)
 
 		} else {
 			entity.Description = entity.Description + words[1]
@@ -92,8 +96,7 @@ func parseLines(lines []string, parsedEntities []Entity, lineIdx int, itemIdx in
 					return
 				}
 				entity.Rate = rate
-				parsedEntities[itemIdx] = entity
-				parseLines(lines, parsedEntities, lineIdx+1, itemIdx+1, Entity{}, false)
+				parseLines(lines, parsedEntities, lineIdx+1, itemIdx+1, entity, false)
 			} else {
 				entity.Description = entity.Description + words[0]
 				parseLines(lines, parsedEntities, lineIdx+1, itemIdx, entity, true)

@@ -1,0 +1,8 @@
+{
+    "DBConfig": {
+        "Host": "127.0.0.1",
+        "Port": "3306",
+        "Username": "umesh_app",
+        "Password": "umesh_app_p"
+    }
+}
